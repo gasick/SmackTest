@@ -19,12 +19,12 @@ class CreateUserActivity : AppCompatActivity() {
         setContentView(R.layout.activity_create_user)
     }
 
-    fun generateUserAvatar (view: View){
+    fun generateUserAvatar(view: View) {
         var random = Random()
         val color = random.nextInt(2)
         val avatar = random.nextInt(28)
 
-        if (color == 0){
+        if (color == 0) {
             userAvatar = "light$avatar"
         } else {
             userAvatar = "dark$avatar"
@@ -33,24 +33,37 @@ class CreateUserActivity : AppCompatActivity() {
         createAvatarImageView.setImageResource(resourceId)
     }
 
-    fun generateColorBtnClicked(view: View){
-        val random  = Random()
+    fun generateColorBtnClicked(view: View) {
+        val random = Random()
         val r = random.nextInt(255)
         val g = random.nextInt(255)
         val b = random.nextInt(255)
 
         createAvatarImageView.setBackgroundColor(Color.rgb(r, g, b))
 
-        val savedR = r.toDouble()/255
-        val savedG = g.toDouble()/255
-        val savedB = b.toDouble()/255
+        val savedR = r.toDouble() / 255
+        val savedG = g.toDouble() / 255
+        val savedB = b.toDouble() / 255
 
         avatarColor = "[$savedR, $savedG, $savedB, 1]"
 
     }
 
-    fun createUserBtnClicked(view: View){
-        AuthService.registerUser(this, "g@g.com", "123654") {}
+    fun createUserBtnClicked(view: View) {
+        val email = createEmailTxt.text.toString()
+        val password = createPasswordTxt.text.toString()
+        AuthService.registerUser(this, email, password) { registerSuccess ->
+            if (registerSuccess) {
+                AuthService.loginUser(this, email, password) { loginSuccess ->
+                    if (loginSuccess) {
+
+                        println(AuthService.authToken)
+                        println(AuthService.userEmail)
+                    }
+                }
+            }
+        }
     }
 }
+
  
