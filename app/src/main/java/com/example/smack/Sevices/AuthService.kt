@@ -111,7 +111,7 @@ object AuthService {
 
                 UserDataService.name = response.getString("name")
                 UserDataService.email = response.getString("email")
-                UserDataService.avataName = response.getString("avatarName")
+                UserDataService.avatarName = response.getString("avatarName")
                 UserDataService.avatarColor = response.getString("avatarColor")
                 UserDataService.id = response.getString("_id")
                 complete(true)
