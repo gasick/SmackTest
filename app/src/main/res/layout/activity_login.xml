@@ -10,7 +10,7 @@
 	<EditText
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
-			android:inputType="textPersonName"
+			android:inputType="textEmailAddress"
 			android:ems="10"
 			android:id="@+id/loginEmailTxt" app:layout_constraintTop_toTopOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
