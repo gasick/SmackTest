@@ -17,9 +17,13 @@ import com.example.smack.R
 import com.example.smack.Sevices.AuthService
 import com.example.smack.Sevices.UserDataService
 import com.example.smack.Utilities.BROADCAST_USER_DATA_CHANGE
+import com.example.smack.Utilities.SOCKET_URL
+import io.socket.client.IO
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    val socket = IO.socket(SOCKET_URL)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,8 +44,27 @@ class MainActivity : AppCompatActivity() {
         toggle.syncState()
         hideKeyboard()
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            userDataChangeReceiver,
+            IntentFilter(BROADCAST_USER_DATA_CHANGE)
+        )
+        socket.connect()
+
+    }
+
+    override fun onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        socket.disconnect()
+        super.onDestroy()
     }
 
     private val userDataChangeReceiver = object: BroadcastReceiver() {
@@ -93,11 +116,9 @@ class MainActivity : AppCompatActivity() {
                     val channelName = nameTextField.text.toString()
                     val channelDesc = descTextField.text.toString()
 
-                    hideKeyboard()
+                    socket.emit("newChannel", channelName, channelDesc)
                 }
                 .setNegativeButton("Cancel") { dialogInteface, i ->
-                    hideKeyboard()
-                    
                 }
                 .show()
         }
@@ -105,7 +126,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sendMessageBtnClicked(view: View){
-
+        hideKeyboard()
     }
 
 
