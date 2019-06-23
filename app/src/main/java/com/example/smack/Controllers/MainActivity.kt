@@ -14,6 +14,7 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import com.example.smack.Model.Channel
 import com.example.smack.R
@@ -24,11 +25,20 @@ import com.example.smack.Utilities.BROADCAST_USER_DATA_CHANGE
 import com.example.smack.Utilities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
+    lateinit var channelAdapter: ArrayAdapter<Channel>
+
+    private fun setupAdapters(){
+        //Создаем адаптер: (контекст, тип layout вывода, источник данных)
+        channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
+        //задаем адаптер для списка
+        channel_list.adapter = channelAdapter
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +59,8 @@ class MainActivity : AppCompatActivity() {
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+        setupAdapters()
+
 
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
 
@@ -72,7 +84,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private val userDataChangeReceiver = object: BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
+        override fun onReceive(context: Context, intent: Intent?) {
             if (AuthService.isLoggedIn){
                 userNameNavHeader.text = UserDataService.name
                 userEmailNavHeader.text = UserDataService.email
@@ -81,6 +93,16 @@ class MainActivity : AppCompatActivity() {
                 //TODO Запилить бакграунд кортинки по пацантске.
                 //userimageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                 loginBtnNavHeader.text = "Logout"
+
+                //Во время успешной авторизации выводим списко каналов
+                MessageService.getChannels(context) {complete ->
+                    if (complete){
+                        //После авторизации говорим адаптеру
+                        //что данные поменялись и нужно обновить адаптер
+                        channelAdapter.notifyDataSetChanged()
+                    }
+
+                }
             }
         }
     }
@@ -135,8 +157,12 @@ class MainActivity : AppCompatActivity() {
             val channelDescription = args[1] as String
             val channelId = args[2] as String
 
+            //Получаем новый объект канала и добавляем его в массив в MessageService
             val  newChannel = Channel(channelName, channelDescription, channelId)
             MessageService.channels.add(newChannel)
+            //Говорим адаптеру, что список каналов изменился
+            //Адаптер ребутается список перезаполняется
+            channelAdapter.notifyDataSetChanged()
             println(newChannel.name)
             println(newChannel.description)
             println(newChannel.id)
