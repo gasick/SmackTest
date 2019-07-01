@@ -13,7 +13,7 @@ import org.json.JSONException
 object MessageService {
     val channels = ArrayList<Channel>()
 
-    fun getChannels(context: Context, complete: (Boolean) -> Unit){
+    fun getChannels(complete: (Boolean) -> Unit){
         val channelRequest = object : JsonArrayRequest(Method.GET, URL_GET_CHANNELS, null, Response.Listener
         {
                 //Получаем ответ от сервера

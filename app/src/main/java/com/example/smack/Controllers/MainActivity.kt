@@ -26,12 +26,14 @@ import com.example.smack.Utilities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapter: ArrayAdapter<Channel>
+    var selectedChannel : Channel? = null
 
     private fun setupAdapters(){
         //Создаем адаптер: (контекст, тип layout вывода, источник данных)
@@ -50,6 +52,13 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         socket.connect()
         socket.on("channelCreated",onNewChannel )
+
+
+        channel_list.setOnItemClickListener{ _, _, i, _->
+            selectedChannel = MessageService.channels[i]
+            drawer_layout.closeDrawer(GravityCompat.START)
+            updateWithChannel()
+        }
 
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
@@ -101,16 +110,29 @@ class MainActivity : AppCompatActivity() {
                 loginBtnNavHeader.text = "Logout"
 
                 //Во время успешной авторизации выводим списко каналов
-                MessageService.getChannels(context) {complete ->
+                MessageService.getChannels {complete ->
                     if (complete){
-                        //После авторизации говорим адаптеру
-                        //что данные поменялись и нужно обновить адаптер
-                        channelAdapter.notifyDataSetChanged()
+                        if (MessageService.channels.count() > 0) {
+                            selectedChannel = MessageService.channels[0]
+                            //После авторизации говорим адаптеру
+                            //что данные поменялись и нужно обновить адаптер
+                            channelAdapter.notifyDataSetChanged()
+                            updateWithChannel()
+                        }
+
+
+
                     }
 
                 }
             }
         }
+    }
+
+
+    fun updateWithChannel() {
+        //Скачать сообщения для канала
+        mainChannelName.text = "#${selectedChannel?.name}"
     }
 
     override fun onBackPressed() {
@@ -141,7 +163,7 @@ class MainActivity : AppCompatActivity() {
             val builder = AlertDialog.Builder(this)
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
             builder.setView(dialogView)
-                .setPositiveButton("Add"){ dialogInterface, i ->
+                .setPositiveButton("Add"){ _, _ ->
                     val nameTextField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
                     val descTextField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
                     val channelName = nameTextField.text.toString()
@@ -149,7 +171,7 @@ class MainActivity : AppCompatActivity() {
 
                     socket.emit("newChannel", channelName, channelDesc)
                 }
-                .setNegativeButton("Cancel") {dialogInterfase, i->
+                .setNegativeButton("Cancel") {_, _->
 
                 }
                 .show()
