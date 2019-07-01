@@ -135,6 +135,15 @@ class MainActivity : AppCompatActivity() {
     fun updateWithChannel() {
         //Скачать сообщения для канала
         mainChannelName.text = "#${selectedChannel?.name}"
+        if (selectedChannel != null){
+            MessageService.getMessages(selectedChannel!!.id){complete ->
+                if (complete){
+                    for (message in MessageService.messages){
+                        println(message.message)
+                    }
+                }
+            }
+        }
     }
 
     override fun onBackPressed() {
@@ -181,37 +190,44 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val onNewChannel = Emitter.Listener { args ->
-        //println(args[0] as String)
-        runOnUiThread{
-            val channelName = args[0] as String
-            val channelDescription = args[1] as String
-            val channelId = args[2] as String
+        if (App.prefs.isLoggedIn) {
+            //println(args[0] as String)
+            runOnUiThread {
+                val channelName = args[0] as String
+                val channelDescription = args[1] as String
+                val channelId = args[2] as String
 
-            //Получаем новый объект канала и добавляем его в массив в MessageService
-            val  newChannel = Channel(channelName, channelDescription, channelId)
-            MessageService.channels.add(newChannel)
-            //Говорим адаптеру, что список каналов изменился
-            //Адаптер ребутается список перезаполняется
-            channelAdapter.notifyDataSetChanged()
-            println(newChannel.name)
-            println(newChannel.description)
-            println(newChannel.id)
+                //Получаем новый объект канала и добавляем его в массив в MessageService
+                val newChannel = Channel(channelName, channelDescription, channelId)
+                MessageService.channels.add(newChannel)
+                //Говорим адаптеру, что список каналов изменился
+                //Адаптер ребутается список перезаполняется
+                channelAdapter.notifyDataSetChanged()
+                println(newChannel.name)
+                println(newChannel.description)
+                println(newChannel.id)
+            }
         }
     }
 
     private val onNewMessage = Emitter.Listener { args ->
-        runOnUiThread{
-            val msgBody = args[0] as String
-            val channelId = args[2] as String
-            val  userName = args[3] as String
-            val userAvatar = args[4] as String
-            val userAvatarColor = args[5] as String
-            val id = args[6] as String
-            val timeStamp = args[7] as String
+        if (App.prefs.isLoggedIn) {
+            runOnUiThread {
+                val channelId = args[2] as String
+                if (channelId == selectedChannel?.id) {
+                    val msgBody = args[0] as String
 
-            val newMessage =  Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
-            MessageService.messages.add(newMessage)
-            println(newMessage.message)
+                    val userName = args[3] as String
+                    val userAvatar = args[4] as String
+                    val userAvatarColor = args[5] as String
+                    val id = args[6] as String
+                    val timeStamp = args[7] as String
+
+                    val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
+                    MessageService.messages.add(newMessage)
+                    println(newMessage.message)
+                }
+            }
         }
     }
 
